@@ -3,13 +3,13 @@ package Environment.GameConfig;
 import Environment.Action.PacManAction;
 import Environment.State.PacManState;
 import Environment.State.PacManStaticPart;
-import Environment.Policy.PacManEnvironmentProbs;
+import Environment.Policy.PacManEnvironmentProbabilities;
 import vahy.impl.episode.AbstractInitialStateSupplier;
 import vahy.impl.model.observation.DoubleVector;
 
 import java.util.SplittableRandom;
 
-public class PacManInitialStateSupplier extends AbstractInitialStateSupplier<PacManGameConfig, PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> {
+public class PacManInitialStateSupplier extends AbstractInitialStateSupplier<PacManGameConfig, PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> {
 
 
     public PacManInitialStateSupplier(PacManGameConfig problemConfig, SplittableRandom random) {

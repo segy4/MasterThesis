@@ -1,0 +1,8 @@
+DoubleVector is implementation of Observation to hold PLAYER observation.
+If you want to create your own it needs to have 1 method and equals(...)+hashCode()
+
+    /**
+     * Method to return double[] that holds information about what the player is observing
+     */
+    getObservedVector()
+

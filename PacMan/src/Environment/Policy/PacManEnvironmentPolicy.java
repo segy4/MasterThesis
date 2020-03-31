@@ -12,7 +12,7 @@ import vahy.utils.RandomDistributionUtils;
 import java.util.List;
 import java.util.SplittableRandom;
 
-public class PacManEnvironmentPolicy extends RandomizedPolicy<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState, PaperPolicyRecord> implements PaperPolicy<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> {
+public class PacManEnvironmentPolicy extends RandomizedPolicy<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState, PaperPolicyRecord> implements PaperPolicy<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> {
     protected PacManEnvironmentPolicy(SplittableRandom random) {
         super(random);
     }

@@ -1,7 +1,7 @@
 package Environment.State;
 
 import Environment.Action.PacManAction;
-import Environment.Policy.PacManEnvironmentProbs;
+import Environment.Policy.PacManEnvironmentProbabilities;
 import Exceptions.*;
 import vahy.api.model.StateRewardReturn;
 import vahy.impl.model.ImmutableStateRewardReturnTuple;
@@ -11,8 +11,9 @@ import vahy.utils.ImmutableTuple;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public class PacManState implements PaperState<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> {
+public class PacManState implements PaperState<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> {
 
     private static final int PLAYER_COORDS = 2;
 
@@ -135,7 +136,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         throw new PacManInvalidPacManCellException("Invalid cell in gameBoard.");
     }
 
-    private StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> playerTurn(PacManAction action) {
+    private StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> playerTurn(PacManAction action) {
         List<List<PacManCell>> newCells = copyGameBoard();
         double reward = -staticPart.getStepPenalty();
         PacManPlayerPosition newPosition = new PacManPlayerPosition(playerPosition);
@@ -186,7 +187,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         return PacManAction.playerActions[staticPart.getRandom().nextInt(0, PacManAction.playerActions.length)];
     }
 
-    private StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> opponentTurn(PacManAction action, int enemyIndex) {
+    private StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> opponentTurn(PacManAction action, int enemyIndex) {
         if (staticPart.getEnemyType().equals(PacManEnemyType.TRAPS)) {
             switch (action) {
                 case TRAP:
@@ -267,7 +268,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
     }
 
     @Override
-    public StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbs, PacManState> applyAction(PacManAction actionType) {
+    public StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> applyAction(PacManAction actionType) {
         if (isAgentTurn) {
             return playerTurn(actionType);
         } else {
@@ -444,9 +445,9 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
     }
 
     @Override
-    public PacManEnvironmentProbs getOpponentObservation() {
+    public PacManEnvironmentProbabilities getOpponentObservation() {
         if (isAgentTurn) {
-            return new PacManEnvironmentProbs(new ImmutableTuple<>(new ArrayList<>(), new ArrayList<>()));
+            return new PacManEnvironmentProbabilities(new ImmutableTuple<>(new ArrayList<>(), new ArrayList<>()));
         }
         List<PacManAction> possibleActions = new ArrayList<>();
         List<Double> probabilities = new ArrayList<>();
@@ -467,7 +468,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         }
         possibleActions.add(PacManAction.NO_ACTION);
         probabilities.add(1.0 - sumPobabilities);
-        return new PacManEnvironmentProbs(new ImmutableTuple<>(possibleActions, probabilities));
+        return new PacManEnvironmentProbabilities(new ImmutableTuple<>(possibleActions, probabilities));
     }
 
     @Override
@@ -550,5 +551,25 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
     @Override
     public boolean isFinalState() {
         return isAgentKilled || noMoreRewards();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PacManState that = (PacManState) o;
+        return isAgentTurn == that.isAgentTurn &&
+                isAgentKilled == that.isAgentKilled &&
+                enemyIndexOnMove == that.enemyIndexOnMove &&
+                Objects.equals(playerPosition, that.playerPosition) &&
+                Objects.equals(beforePlayerPosition, that.beforePlayerPosition) &&
+                Objects.equals(enemyPositions, that.enemyPositions) &&
+                Objects.equals(gameBoard, that.gameBoard) &&
+                Objects.equals(staticPart, that.staticPart);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isAgentTurn, isAgentKilled, playerPosition, beforePlayerPosition, enemyPositions, enemyIndexOnMove, gameBoard, staticPart);
     }
 }

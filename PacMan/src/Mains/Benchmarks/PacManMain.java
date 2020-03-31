@@ -3,10 +3,9 @@ package Mains.Benchmarks;
 import Environment.Action.PacManAction;
 import Environment.GameConfig.PacManGameConfig;
 import Environment.GameConfig.PacManInitialStateSupplier;
-import Environment.Policy.PacManEnvironmentProbs;
-import Environment.Policy.PacManPolicySupplier;
+import Environment.Policy.PacManEnvironmentProbabilities;
+import Environment.Policy.PacManEnvironmentPolicySupplier;
 import Environment.State.PacManState;
-import Exceptions.PacManInvalidBenchmarkException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vahy.api.experiment.StochasticStrategy;
@@ -25,13 +24,13 @@ public abstract class PacManMain implements IPacManMain {
         SystemConfig systemConfig = createSystemConfig();
         PacManGameConfig gameConfig = createGameConfig();
 
-        PaperExperimentBuilder<PacManGameConfig, PacManAction, PacManEnvironmentProbs, PacManState> experiment =
+        PaperExperimentBuilder<PacManGameConfig, PacManAction, PacManEnvironmentProbabilities, PacManState> experiment =
                 new PaperExperimentBuilder<>()
                 .setActionClass(PacManAction.class)
                 .setSystemConfig(systemConfig)
                 .setAlgorithmConfigList(List.of(algorithmConfig))
                 .setProblemConfig(gameConfig)
-                .setOpponentSupplier(PacManPolicySupplier::new)
+                .setOpponentSupplier(PacManEnvironmentPolicySupplier::new)
                 .setProblemInstanceInitializerSupplier(PacManInitialStateSupplier::new)
                 .execute();
     }

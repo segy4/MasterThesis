@@ -6,11 +6,11 @@ import vahy.utils.ImmutableTuple;
 
 import java.util.List;
 
-public class PacManEnvironmentProbs implements FixedModelObservation<PacManAction> {
+public class PacManEnvironmentProbabilities implements FixedModelObservation<PacManAction> {
 
     private final ImmutableTuple<List<PacManAction>, List<Double>> probabilities;
 
-    public PacManEnvironmentProbs(ImmutableTuple<List<PacManAction>, List<Double>> probabilities) {
+    public PacManEnvironmentProbabilities(ImmutableTuple<List<PacManAction>, List<Double>> probabilities) {
         this.probabilities = probabilities;
     }
 
