@@ -12,9 +12,13 @@ public enum PacManAction implements Action {
     RIGHT(true, true, 3, 3),
     NO_ACTION(false, true, 4, 4),
 
-    TRAP(false, true, 5, 5),
-    OPPOSITE_MOVE(false, true, 6, 6),
-    RANDOM_MOVE(false, true, 7, 7);
+    NOISY_MOVE_LEFT(false, true, 5, 5),
+    NOISY_MOVE_RIGHT(false, true, 6, 6),
+
+    TRAP(false, true, 7, 7),
+
+    OPPOSITE_MOVE(false, true, 8, 8),
+    RANDOM_MOVE(false, true, 9, 9);
     
 
     public static PacManAction[] playerActions = Arrays.stream(PacManAction.values()).filter(PacManAction::isPlayerAction).sorted(Comparator.comparing(PacManAction::getActionIndexInPlayerActions)).toArray(PacManAction[]::new);

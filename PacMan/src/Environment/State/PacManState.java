@@ -3,6 +3,8 @@ package Environment.State;
 import Environment.Action.PacManAction;
 import Environment.Policy.PacManEnvironmentProbabilities;
 import Exceptions.*;
+import jdk.jshell.spi.ExecutionControl;
+import org.apache.commons.lang3.NotImplementedException;
 import vahy.api.model.StateRewardReturn;
 import vahy.impl.model.ImmutableStateRewardReturnTuple;
 import vahy.impl.model.observation.DoubleVector;
@@ -32,6 +34,9 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
     private final int enemyIndexOnMove;
     private final List<List<PacManCell>> gameBoard;
 
+    private final boolean noisyMoveRight;
+    private final boolean noisyMoveLeft;
+
     private PacManStaticPart staticPart;
 
     public PacManState(boolean isAgentTurn,
@@ -41,6 +46,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                        List<PacManEnemyPosition> enemyPositions,
                        int enemyIndexOnMove,
                        List<List<PacManCell>> gameBoard,
+                       boolean noisyMoveRight,
+                       boolean noisyMoveLeft,
                        PacManStaticPart staticPart) {
         this.isAgentTurn = isAgentTurn;
         this.isAgentKilled = isAgentKilled;
@@ -49,6 +56,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         this.enemyPositions = enemyPositions;
         this.enemyIndexOnMove = enemyIndexOnMove;
         this.gameBoard = gameBoard;
+        this.noisyMoveRight = noisyMoveRight;
+        this.noisyMoveLeft = noisyMoveLeft;
         this.staticPart = staticPart;
     }
 
@@ -97,7 +106,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             case RIGHT:
                 return gameBoard.get(pos.getX()).get(pos.getY() + 1) != PacManCell.WALL;
         }
-        throw new PacManNotActionForMovingException("Not action for moving.");
+        throw new PacManNotActionForMovingException("Not action for moving. " + action.toString());
     }
 
     private double changeCell(PacManAction action, List<List<PacManCell>> cells) {
@@ -105,7 +114,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         int yCoord = playerPosition.getY();
         switch (action) {
             case NO_ACTION:
-                throw new PacManNotPlayerActionException("Not player action.");
+                throw new PacManNotPlayerActionException("Not player action. " + action.toString());
             case UP:
                 xCoord = xCoord - 1;
                 break;
@@ -127,13 +136,11 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                 cells.get(xCoord).set(yCoord, PacManCell.NOTHING);
                 return staticPart.getBigBallReward();
             case NOTHING:
-                return 0.0;
             case WALL:
-                return 0.0;
             case TRAP:
                 return 0.0;
         }
-        throw new PacManInvalidPacManCellException("Invalid cell in gameBoard.");
+        throw new PacManInvalidPacManCellException("Invalid cell in gameBoard. " + cells.get(xCoord).get(yCoord));
     }
 
     private StateRewardReturn<PacManAction, DoubleVector, PacManEnvironmentProbabilities, PacManState> playerTurn(PacManAction action) {
@@ -144,25 +151,25 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             case UP:
                 if (canMove(playerPosition, PacManAction.UP)) {
                     reward += changeCell(PacManAction.UP, newCells);
-                    newPosition.setX(newPosition.getX() - 1);
+                    newPosition.setX(playerPosition.getX() - 1);
                 }
                 break;
             case DOWN:
                 if (canMove(playerPosition, PacManAction.DOWN)) {
                     reward += changeCell(PacManAction.DOWN, newCells);
-                    newPosition.setX(newPosition.getX() + 1);
+                    newPosition.setX(playerPosition.getX() + 1);
                 }
                 break;
             case LEFT:
                 if (canMove(playerPosition, PacManAction.LEFT)) {
                     reward += changeCell(PacManAction.LEFT, newCells);
-                    newPosition.setY(newPosition.getY() - 1);
+                    newPosition.setY(playerPosition.getY() - 1);
                 }
                 break;
             case RIGHT:
                 if (canMove(playerPosition, PacManAction.RIGHT)) {
                     reward += changeCell(PacManAction.RIGHT, newCells);
-                    newPosition.setY(newPosition.getY() + 1);
+                    newPosition.setY(playerPosition.getY() + 1);
                 }
                 break;
             case NO_ACTION:
@@ -170,6 +177,18 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             case RANDOM_MOVE:
             case OPPOSITE_MOVE:
                 throw new PacManNotPlayerActionException("Not player action. " + action.toString());
+        }
+        if (noisyMoveLeft) {
+            if (canMove(newPosition, PacManAction.LEFT)) {
+                reward += changeCell(PacManAction.LEFT, newCells);
+                newPosition.setY(newPosition.getY() - 1);
+            }
+        }
+        if (noisyMoveRight) {
+            if (canMove(newPosition, PacManAction.RIGHT)) {
+                reward += changeCell(PacManAction.RIGHT, newCells);
+                newPosition.setY(newPosition.getY() - 1);
+            }
         }
         return new ImmutableStateRewardReturnTuple<>(
                 new PacManState(!isAgentTurn,
@@ -179,6 +198,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                         new ArrayList<>(enemyPositions),
                         0,
                         newCells,
+                        false,
+                        false,
                         staticPart),
                 reward);
     }
@@ -199,6 +220,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                                     new ArrayList<>(enemyPositions),
                                     0,
                                     copyGameBoard(),
+                                    false,
+                                    false,
                                     staticPart),
                             0.0);
                 case OPPOSITE_MOVE:
@@ -210,57 +233,139 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                                     new ArrayList<>(enemyPositions),
                                     0,
                                     copyGameBoard(),
+                                    false,
+                                    false,
                                     staticPart),
                             -staticPart.getStepPenalty());
                 case RANDOM_MOVE:
                     return playerTurn(pickRandomPlayerOption());
+                case NO_ACTION:
+                    return new ImmutableStateRewardReturnTuple<>(
+                            new PacManState(!isAgentTurn,
+                                    isAgentKilled,
+                                    playerPosition,
+                                    playerPosition,
+                                    new ArrayList<>(enemyPositions),
+                                    0,
+                                    copyGameBoard(),
+                                    false,
+                                    false,
+                                    staticPart),
+                            0.0);
+                case NOISY_MOVE_LEFT:
+                case NOISY_MOVE_RIGHT:
                 case RIGHT:
                 case LEFT:
                 case DOWN:
                 case UP:
+                    throw new PacManInvalidOpponentMoveException("These are for game with enemies. " + action.toString());
+            }
+        } else if (staticPart.getEnemyType().equals(PacManEnemyType.NOISY_MOVE)) {
+            switch (action) {
+                case TRAP:
+                    return new ImmutableStateRewardReturnTuple<>(
+                            new PacManState(!isAgentTurn,
+                                    true,
+                                    playerPosition,
+                                    playerPosition,
+                                    new ArrayList<>(enemyPositions),
+                                    0,
+                                    copyGameBoard(),
+                                    false,
+                                    false,
+                                    staticPart),
+                            0.0);
+                case NOISY_MOVE_LEFT:
+                    return new ImmutableStateRewardReturnTuple<>(
+                            new PacManState(!isAgentTurn,
+                                    true,
+                                    playerPosition,
+                                    playerPosition,
+                                    new ArrayList<>(enemyPositions),
+                                    0,
+                                    copyGameBoard(),
+                                    false,
+                                    true,
+                                    staticPart),
+                            0.0);
+                case NOISY_MOVE_RIGHT:
+                    return new ImmutableStateRewardReturnTuple<>(
+                            new PacManState(!isAgentTurn,
+                                    true,
+                                    playerPosition,
+                                    playerPosition,
+                                    new ArrayList<>(enemyPositions),
+                                    0,
+                                    copyGameBoard(),
+                                    true,
+                                    false,
+                                    staticPart),
+                            0.0);
                 case NO_ACTION:
+                    return new ImmutableStateRewardReturnTuple<>(
+                            new PacManState(!isAgentTurn,
+                                    isAgentKilled,
+                                    playerPosition,
+                                    playerPosition,
+                                    new ArrayList<>(enemyPositions),
+                                    0,
+                                    copyGameBoard(),
+                                    false,
+                                    false,
+                                    staticPart),
+                            0.0);
+                case OPPOSITE_MOVE:
+                case RANDOM_MOVE:
+                case RIGHT:
+                case LEFT:
+                case DOWN:
+                case UP:
                     throw new PacManInvalidOpponentMoveException("These are for game with enemies. " + action.toString());
             }
         } else {
             List<PacManEnemyPosition> newEnemyPositions = new ArrayList<>(enemyPositions);
-            PacManEnemyPosition newPosition = enemyPositions.get(enemyIndex);
+            PacManEnemyPosition newEnemyPosition = enemyPositions.get(enemyIndex);
             switch (action) {
                 case NO_ACTION:
                     break;
                 case UP:
-                    if (canMove(newPosition, PacManAction.UP)) {
-                        newPosition = new PacManEnemyPosition(newPosition.getX() - 1, newPosition.getY());
+                    if (canMove(newEnemyPosition, PacManAction.UP)) {
+                        newEnemyPosition = new PacManEnemyPosition(newEnemyPosition.getX() - 1, newEnemyPosition.getY());
                     }
                     break;
                 case DOWN:
-                    if (canMove(newPosition, PacManAction.DOWN)) {
-                        newPosition = new PacManEnemyPosition(newPosition.getX() + 1, newPosition.getY());
+                    if (canMove(newEnemyPosition, PacManAction.DOWN)) {
+                        newEnemyPosition = new PacManEnemyPosition(newEnemyPosition.getX() + 1, newEnemyPosition.getY());
                     }
                     break;
                 case LEFT:
-                    if (canMove(newPosition, PacManAction.LEFT)) {
-                        newPosition = new PacManEnemyPosition(newPosition.getX(), newPosition.getY() - 1);
+                    if (canMove(newEnemyPosition, PacManAction.LEFT)) {
+                        newEnemyPosition = new PacManEnemyPosition(newEnemyPosition.getX(), newEnemyPosition.getY() - 1);
                     }
                     break;
                 case RIGHT:
-                    if (canMove(newPosition, PacManAction.RIGHT)) {
-                        newPosition = new PacManEnemyPosition(newPosition.getX(), newPosition.getY() + 1);
+                    if (canMove(newEnemyPosition, PacManAction.RIGHT)) {
+                        newEnemyPosition = new PacManEnemyPosition(newEnemyPosition.getX(), newEnemyPosition.getY() + 1);
                     }
                     break;
+                case NOISY_MOVE_LEFT:
+                case NOISY_MOVE_RIGHT:
                 case TRAP:
                 case RANDOM_MOVE:
                 case OPPOSITE_MOVE:
                     throw new PacManInvalidOpponentMoveException("This is meant for with traps game. " + action.toString());
             }
-            newEnemyPositions.set(enemyIndex, newPosition);
+            newEnemyPositions.set(enemyIndex, newEnemyPosition);
             return new ImmutableStateRewardReturnTuple<>(
                     new PacManState((enemyIndexOnMove + 1) == enemyPositions.size(),
-                            playerPosition.equals(newPosition),
+                            playerPosition.equals(newEnemyPosition),
                             playerPosition,
                             beforePlayerPosition,
                             newEnemyPositions,
                             (enemyIndexOnMove + 1) == enemyPositions.size() ? 0 : enemyIndexOnMove + 1,
                             gameBoard,
+                            false,
+                            false,
                             staticPart),
                     0.0);
         }
@@ -286,7 +391,6 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
 
     @Override
     public PacManState deepCopy() {
-
         List<List<PacManCell>> newCells = copyGameBoard();
         return new PacManState(isAgentTurn,
                 isAgentKilled,
@@ -295,6 +399,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                 new ArrayList<>(enemyPositions),
                 enemyIndexOnMove,
                 newCells,
+                noisyMoveRight,
+                noisyMoveLeft,
                 staticPart);
     }
 
@@ -316,7 +422,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             case BIG_BALL:
                 return BIG_BALL;
         }
-        throw new PacManInvalidPacManCellException("There exist a new type of cell.");
+        throw new PacManInvalidPacManCellException("There exist a new type of cell. " + gameBoard.get(x).get(y));
     }
 
     @Override
@@ -349,6 +455,26 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             actions.add(PacManAction.RANDOM_MOVE);
             probabilities.add(staticPart.getRandomMoveProbability());
             returnSum += staticPart.getRandomMoveProbability();
+        }
+        return returnSum;
+    }
+
+    private double getNoisyMoveActions(List<PacManAction> actions, List<Double> probabilities) {
+        double returnSum = 0.0;
+        if (gameBoard.get(playerPosition.getX()).get(playerPosition.getY()).equals(PacManCell.TRAP)) {
+            actions.add(PacManAction.TRAP);
+            probabilities.add(staticPart.getTrapProbability());
+            returnSum += staticPart.getTrapProbability();
+        }
+        if (returnSum + staticPart.getNoisyMoveProbability() < 1.0) {
+            actions.add(PacManAction.NOISY_MOVE_RIGHT);
+            probabilities.add(staticPart.getNoisyMoveProbability());
+            returnSum += staticPart.getNoisyMoveProbability();
+        }
+        if (returnSum + staticPart.getNoisyMoveProbability() < 1.0) {
+            actions.add(PacManAction.NOISY_MOVE_LEFT);
+            probabilities.add(staticPart.getNoisyMoveProbability());
+            returnSum += staticPart.getNoisyMoveProbability();
         }
         return returnSum;
     }
@@ -441,7 +567,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
     }
 
     private double getBFSShortestPathActions(List<PacManAction> actions, List<Double> probabilities) {
-        throw new NotImplementedException("BFS is not implemented yet.");
+        throw new NotImplementedException("Not implemented.");
     }
 
     @Override
@@ -451,23 +577,26 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         }
         List<PacManAction> possibleActions = new ArrayList<>();
         List<Double> probabilities = new ArrayList<>();
-        double sumPobabilities = 0.0;
+        double sumProbabilities = 0.0;
         switch (staticPart.getEnemyType()) {
             case TRAPS:
-                sumPobabilities = getTrapActions(possibleActions, probabilities);
+                sumProbabilities = getTrapActions(possibleActions, probabilities);
+                break;
+            case NOISY_MOVE:
+                sumProbabilities = getNoisyMoveActions(possibleActions, probabilities);
                 break;
             case WHEN_VISIBLE_CHASE:
-                sumPobabilities = getWhenVisibleChaseActions(possibleActions, probabilities);
+                sumProbabilities = getWhenVisibleChaseActions(possibleActions, probabilities);
                 break;
             case BFS_SHORTEST_PATH:
-                sumPobabilities = getBFSShortestPathActions(possibleActions, probabilities);
+                sumProbabilities = getBFSShortestPathActions(possibleActions, probabilities);
                 break;
         }
-        if (sumPobabilities > 1.0) {
+        if (sumProbabilities > 1.0) {
             throw new PacManInvalidOpponentObservationException("Sum of all probabilities can't be more than 1.0.");
         }
         possibleActions.add(PacManAction.NO_ACTION);
-        probabilities.add(1.0 - sumPobabilities);
+        probabilities.add(1.0 - sumProbabilities);
         return new PacManEnvironmentProbabilities(new ImmutableTuple<>(possibleActions, probabilities));
     }
 
@@ -477,15 +606,23 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
             return "Agent is dead!";
         }
         StringBuilder returnString = new StringBuilder();
+        boolean addedE = false;
         for (int i = 0; i < gameBoard.size(); ++i) {
-            for (int j = 0; j < gameBoard.size(); ++j) {
+            for (int j = 0; j < gameBoard.get(i).size(); ++j) {
                 if (playerPosition.isSame(i, j)) {
                     returnString.append('P');
+                    continue;
                 }
                 for (PacManEnemyPosition enemyPosition : enemyPositions) {
                     if (enemyPosition.isSame(i, j)) {
                         returnString.append('E');
+                        addedE = true;
+                        break;
                     }
+                }
+                if (addedE) {
+                    addedE = false;
+                    continue;
                 }
                 switch (gameBoard.get(i).get(j)) {
                     case WALL:
@@ -502,6 +639,7 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
                         break;
                 }
             }
+            returnString.append('\n');
         }
         return returnString.toString();
     }
@@ -561,6 +699,8 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
         return isAgentTurn == that.isAgentTurn &&
                 isAgentKilled == that.isAgentKilled &&
                 enemyIndexOnMove == that.enemyIndexOnMove &&
+                noisyMoveRight == that.noisyMoveRight &&
+                noisyMoveLeft == that.noisyMoveLeft &&
                 Objects.equals(playerPosition, that.playerPosition) &&
                 Objects.equals(beforePlayerPosition, that.beforePlayerPosition) &&
                 Objects.equals(enemyPositions, that.enemyPositions) &&
@@ -570,6 +710,6 @@ public class PacManState implements PaperState<PacManAction, DoubleVector, PacMa
 
     @Override
     public int hashCode() {
-        return Objects.hash(isAgentTurn, isAgentKilled, playerPosition, beforePlayerPosition, enemyPositions, enemyIndexOnMove, gameBoard, staticPart);
+        return Objects.hash(isAgentTurn, isAgentKilled, playerPosition, beforePlayerPosition, enemyPositions, enemyIndexOnMove, gameBoard, noisyMoveRight, noisyMoveLeft, staticPart);
     }
 }

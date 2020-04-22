@@ -1,5 +1,3 @@
-package Template;
-
 import vahy.api.experiment.ProblemConfig;
 
 /**

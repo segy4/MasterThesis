@@ -14,25 +14,29 @@ import vahy.api.experiment.SystemConfigBuilder;
 import vahy.config.PaperAlgorithmConfig;
 import vahy.paperGenerics.PaperExperimentBuilder;
 
-import java.awt.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public abstract class PacManMain implements IPacManMain {
     public static final Logger logger = LoggerFactory.getLogger(PacManMain.class.getName());
 
     public void run() {
         PaperAlgorithmConfig algorithmConfig = createAlgorithmConfig();
+        List<PaperAlgorithmConfig> algorithmConfigList = new ArrayList<>();
+        algorithmConfigList.add(algorithmConfig);
         SystemConfig systemConfig = createSystemConfig();
         PacManGameConfig gameConfig = createGameConfig();
 
         PaperExperimentBuilder<PacManGameConfig, PacManAction, PacManEnvironmentProbabilities, PacManState> experiment =
-                new PaperExperimentBuilder<>()
+                new PaperExperimentBuilder<PacManGameConfig, PacManAction, PacManEnvironmentProbabilities, PacManState>()
                 .setActionClass(PacManAction.class)
                 .setSystemConfig(systemConfig)
-                .setAlgorithmConfigList(List.of(algorithmConfig))
+                .setAlgorithmConfigList(algorithmConfigList)
                 .setProblemConfig(gameConfig)
                 .setOpponentSupplier(PacManEnvironmentPolicySupplier::new)
-                .setProblemInstanceInitializerSupplier(PacManInitialStateSupplier::new)
-                .execute();
+                .setProblemInstanceInitializerSupplier(PacManInitialStateSupplier::new);
+
+        experiment.execute();
     }
 
     public SystemConfig createSystemConfig() {

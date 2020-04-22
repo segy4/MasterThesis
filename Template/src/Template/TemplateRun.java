@@ -1,35 +1,60 @@
-package Mains.Tests;
-
 import Environment.GameConfig.PacManGameConfig;
-import Environment.GameConfig.PacManGameConfigBuilder;
-import Environment.State.PacManEnemyType;
-import Mains.Benchmarks.PacManMain;
-import Mains.Instances.PacManGameInstance;
-import vahy.api.learning.ApproximatorType;
-import vahy.api.learning.dataAggregator.DataAggregationAlgorithm;
-import vahy.config.AlgorithmConfigBuilder;
-import vahy.config.EvaluatorType;
+import vahy.api.experiment.SystemConfig;
 import vahy.config.PaperAlgorithmConfig;
-import vahy.config.SelectorType;
-import vahy.impl.search.tree.treeUpdateCondition.FixedUpdateCountTreeConditionFactory;
-import vahy.paperGenerics.policy.flowOptimizer.FlowOptimizerType;
-import vahy.paperGenerics.policy.riskSubtree.SubTreeRiskCalculatorType;
-import vahy.paperGenerics.policy.riskSubtree.strategiesProvider.ExplorationExistingFlowStrategy;
-import vahy.paperGenerics.policy.riskSubtree.strategiesProvider.ExplorationNonExistingFlowStrategy;
-import vahy.paperGenerics.policy.riskSubtree.strategiesProvider.InferenceExistingFlowStrategy;
-import vahy.paperGenerics.policy.riskSubtree.strategiesProvider.InferenceNonExistingFlowStrategy;
 
-import java.util.function.Supplier;
+/**
+ * Class that creates initial Configs for algorithm
+ * These configs can be created anywhere, but I am putting all documentation in one place.
+ */
+public class TemplateRun {
 
-public class PacManTest00 extends PacManMain {
+    /**
+     * Template for class that will run the experiment
+     * You need three different configs.
+     * SystemConfig - This holds information about for system. (such as if you want the run to be reproducible, amount of episodes etc.)
+     * AlgorithmConfig - This holds information about how the algorithm works. (such as temperature, exploration rate, risk etc.)
+     * GameConfig - This holds information about the first setup of the game. (this is used in initial supplier to create first state)
+     */
+    void run() {
+        PaperAlgorithmConfig algorithmConfig = createAlgorithmConfig();
+        List<PaperAlgorithmConfig> algorithmConfigList = new ArrayList<>();
+        algorithmConfigList.add(algorithmConfig);
+        SystemConfig systemConfig = createSystemConfig();
+        TemplateProblemConfig gameConfig = createGameConfig();
 
-    public static void main(String[] args) {
-        PacManTest00 test = new PacManTest00();
-        test.run();
+        PaperExperimentBuilder<TemplateProblemConfig, TemplateAction, TemplateEnvironmentObservation, TemplateState> experiment =
+                new PaperExperimentBuilder<PacManGameConfig, PacManAction, PacManEnvironmentProbabilities, PacManState>()
+                        .setActionClass(TemplateAction.class)
+                        .setSystemConfig(systemConfig)
+                        .setAlgorithmConfigList(algorithmConfigList)
+                        .setProblemConfig(gameConfig)
+                        .setOpponentSupplier(TemplateRandomizedPolicySupplier::new)
+                        .setProblemInstanceInitializerSupplier(TemplateInitialStateSupplier::new);
+
+        experiment.execute();
     }
 
-    @Override
-    public PaperAlgorithmConfig createAlgorithmConfig() {
+    /**
+     * Creates SystemConfig
+     * @return SystemConfig
+     */
+    private SystemConfig createSystemConfig() {
+        return new SystemConfigBuilder()
+                .setRandomSeed(0)
+                .setStochasticStrategy(StochasticStrategy.REPRODUCIBLE)
+                .setDrawWindow(false)
+                .setParallelThreadsCount(Runtime.getRuntime().availableProcessors())
+                .setSingleThreadedEvaluation(false)
+                .setEvalEpisodeCount(1000)
+                .setDumpTrainingData(false)
+                .buildSystemConfig();
+    }
+
+    /**
+     * Creates AlgorithmConfig
+     * @return AlgorithmConfig
+     */
+    PaperAlgorithmConfig createAlgorithmConfig() {
         int batchSize = 100;
         return new AlgorithmConfigBuilder()
                 //MCTS
@@ -80,17 +105,11 @@ public class PacManTest00 extends PacManMain {
                 .buildAlgorithmConfig();
     }
 
-    @Override
-    public PacManGameConfig createGameConfig() {
-        return new PacManGameConfigBuilder()
-                .enemyType(PacManEnemyType.TRAPS)
-                .bigBallReward(10.0)
-                .smallBallReward(1.0)
-                .gameString(PacManGameInstance.TEST00)
-                .maximalStepCountBound(50)
-                .oppositeMoveChance(0.2)
-                .randomMoveChance(0.2)
-                .trapChance(0.0)
-                .build();
+    /**
+     * Creates GameConfig
+     * @return GameConfig
+     */
+    TemplateProblemConfig createGameConfig() {
+        return new TemplateProblemConfig();
     }
 }

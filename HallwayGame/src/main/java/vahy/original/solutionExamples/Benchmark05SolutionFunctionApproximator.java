@@ -105,7 +105,7 @@ public class Benchmark05SolutionFunctionApproximator {
 
             .learningRate(0.01)
 
-            .approximatorType(ApproximatorType.TF_NN)
+            .approximatorType(ApproximatorType.HASHMAP)
             .selectorType(SelectorType.UCB)
             .globalRiskAllowed(1.00)
             .riskSupplier(new Supplier<Double>() {

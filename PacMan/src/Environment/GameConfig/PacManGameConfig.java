@@ -18,6 +18,7 @@ public class PacManGameConfig extends ProblemConfig {
     private final List<PacManEnemyPosition> enemyPositions;
     private final PacManPlayerPosition playerPosition;
     private final double trapChance;
+    private final double noisyMoveChance;
     private final double oppositeMoveChance;
     private final double randomMoveChance;
 
@@ -32,7 +33,7 @@ public class PacManGameConfig extends ProblemConfig {
                             List<PacManEnemyPosition> enemyPositions,
                             PacManPlayerPosition playerPosition,
                             double trapChance,
-                            double oppositeMoveChance,
+                            double noisyMoveChance, double oppositeMoveChance,
                             double randomMoveChance) {
         super(maximalStepCountBound);
         this.bigBallReward = bigBallReward;
@@ -43,6 +44,7 @@ public class PacManGameConfig extends ProblemConfig {
         this.enemyPositions = enemyPositions;
         this.playerPosition = playerPosition;
         this.trapChance = trapChance;
+        this.noisyMoveChance = noisyMoveChance;
         this.oppositeMoveChance = oppositeMoveChance;
         this.randomMoveChance = randomMoveChance;
     }
@@ -77,6 +79,10 @@ public class PacManGameConfig extends ProblemConfig {
 
     public double getTrapChance() {
         return trapChance;
+    }
+
+    public double getNoisyMoveChance() {
+        return noisyMoveChance;
     }
 
     public double getOppositeMoveChance() {
@@ -124,4 +130,6 @@ public class PacManGameConfig extends ProblemConfig {
     public String toFile() {
         return toString();
     }
+
+
 }
