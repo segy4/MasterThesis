@@ -1,7 +1,8 @@
 package vahy.impl.learning.dataAggregator;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import vahy.impl.learning.model.MutableDoubleArray;
 import vahy.impl.model.observation.DoubleVector;
 import vahy.utils.ImmutableTuple;
@@ -13,7 +14,7 @@ public class ReplayBufferDataAggregatorTest {
 
     @Test
     public void basicTest() {
-        var replayBuffer = new ReplayBufferDataAggregator(2, new LinkedList<>());
+        var replayBuffer = new ReplayBufferDataAggregator(2);
 
         var data = new ArrayList<ImmutableTuple<DoubleVector, MutableDoubleArray>>();
         data.add(new ImmutableTuple<>(new DoubleVector(new double[] {0, 0, 1}), new MutableDoubleArray(new double[] {1, 0}, false)));
@@ -29,19 +30,19 @@ public class ReplayBufferDataAggregatorTest {
         var inputs = trainingDataset.getFirst();
         var targets = trainingDataset.getSecond();
 
-        Assert.assertEquals(inputs.length, 6);
-        Assert.assertEquals(targets.length, 6);
+        assertEquals(inputs.length, 6);
+        assertEquals(targets.length, 6);
 
         for (int i = 0; i < inputs.length; i++) {
-            Assert.assertEquals(inputs[i].getObservedVector(), data.get(i).getFirst().getObservedVector());
-            Assert.assertEquals(targets[i], data.get(i).getSecond().getDoubleArray());
+            assertArrayEquals(inputs[i].getObservedVector(), data.get(i).getFirst().getObservedVector());
+            assertArrayEquals(targets[i], data.get(i).getSecond().getDoubleArray());
         }
 
     }
 
     @Test
     public void twoAdditionTest() {
-        var replayBuffer = new ReplayBufferDataAggregator(1, new LinkedList<>());
+        var replayBuffer = new ReplayBufferDataAggregator(1);
 
         var data = new ArrayList<ImmutableTuple<DoubleVector, MutableDoubleArray>>();
         data.add(new ImmutableTuple<>(new DoubleVector(new double[] {0, 0, 1}), new MutableDoubleArray(new double[] {1, 0}, false)));
@@ -67,19 +68,19 @@ public class ReplayBufferDataAggregatorTest {
         var inputs = trainingDataset.getFirst();
         var targets = trainingDataset.getSecond();
 
-        Assert.assertEquals(inputs.length, 6);
-        Assert.assertEquals(targets.length, 6);
+        assertEquals(inputs.length, 6);
+        assertEquals(targets.length, 6);
 
         for (int i = 0; i < inputs.length; i++) {
-            Assert.assertEquals(inputs[i].getObservedVector(), data.get(i).getFirst().getObservedVector());
-            Assert.assertEquals(targets[i], data.get(i).getSecond().getDoubleArray());
+            assertArrayEquals(inputs[i].getObservedVector(), data.get(i).getFirst().getObservedVector());
+            assertArrayEquals(targets[i], data.get(i).getSecond().getDoubleArray());
         }
 
     }
 
     @Test
     public void multiAdditionTest() {
-        var replayBuffer = new ReplayBufferDataAggregator(2, new LinkedList<>());
+        var replayBuffer = new ReplayBufferDataAggregator(2);
 
         var data = new ArrayList<ImmutableTuple<DoubleVector, MutableDoubleArray>>();
         data.add(new ImmutableTuple<>(new DoubleVector(new double[] {0, 0, 1}), new MutableDoubleArray(new double[] {1, 0}, false)));
@@ -112,17 +113,17 @@ public class ReplayBufferDataAggregatorTest {
         var inputs = trainingDataset.getFirst();
         var targets = trainingDataset.getSecond();
 
-        Assert.assertEquals(inputs.length, 9);
-        Assert.assertEquals(targets.length, 9);
+        assertEquals(inputs.length, 9);
+        assertEquals(targets.length, 9);
 
         for (int i = 0; i < data2.size(); i++) {
-            Assert.assertEquals(inputs[i].getObservedVector(), data2.get(i).getFirst().getObservedVector());
-            Assert.assertEquals(targets[i], data2.get(i).getSecond().getDoubleArray());
+            assertArrayEquals(inputs[i].getObservedVector(), data2.get(i).getFirst().getObservedVector());
+            assertArrayEquals(targets[i], data2.get(i).getSecond().getDoubleArray());
         }
 
         for (int i = data2.size(); i < data2.size() + data3.size(); i++) {
-            Assert.assertEquals(inputs[i].getObservedVector(), data3.get(i - data2.size()).getFirst().getObservedVector());
-            Assert.assertEquals(targets[i], data3.get(i - data2.size()).getSecond().getDoubleArray());
+            assertArrayEquals(inputs[i].getObservedVector(), data3.get(i - data2.size()).getFirst().getObservedVector());
+            assertArrayEquals(targets[i], data3.get(i - data2.size()).getSecond().getDoubleArray());
         }
 
     }

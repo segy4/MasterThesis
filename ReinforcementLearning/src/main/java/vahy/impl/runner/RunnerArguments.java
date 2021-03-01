@@ -4,80 +4,74 @@ import vahy.api.benchmark.EpisodeStatistics;
 import vahy.api.benchmark.EpisodeStatisticsCalculator;
 import vahy.api.episode.EpisodeResultsFactory;
 import vahy.api.episode.InitialStateSupplier;
-import vahy.api.experiment.AlgorithmConfig;
+import vahy.api.episode.StateWrapperInitializer;
+import vahy.api.experiment.CommonAlgorithmConfig;
 import vahy.api.experiment.ProblemConfig;
 import vahy.api.experiment.SystemConfig;
-import vahy.api.learning.dataAggregator.DataAggregator;
-import vahy.api.learning.trainer.EpisodeDataMaker;
+import vahy.api.learning.trainer.EarlyStoppingStrategy;
 import vahy.api.model.Action;
 import vahy.api.model.State;
 import vahy.api.model.observation.Observation;
-import vahy.api.policy.PolicyRecord;
-import vahy.api.policy.PolicySupplier;
-import vahy.api.predictor.TrainablePredictor;
 import vahy.impl.episode.DataPointGeneratorGeneric;
 
 import java.util.List;
+import java.util.SplittableRandom;
 
 public class RunnerArguments<TConfig extends ProblemConfig,
     TAction extends Enum<TAction> & Action,
-    TPlayerObservation extends Observation,
-    TOpponentObservation extends Observation,
-    TState extends State<TAction, TPlayerObservation, TOpponentObservation, TState>,
-    TPolicyRecord extends PolicyRecord,
+    TObservation extends Observation<TObservation>,
+    TState extends State<TAction, TObservation, TState>,
     TStatistics extends EpisodeStatistics> {
 
-    private String policyId;
+    private final String runName;
 
-    private TConfig problemConfig;
-    private SystemConfig systemConfig;
-    private AlgorithmConfig algorithmConfig;
+    private final TConfig problemConfig;
+    private final SystemConfig systemConfig;
+    private final CommonAlgorithmConfig algorithmConfig;
+    private final SplittableRandom finalMasterRandom;
 
-    private InitialStateSupplier<TConfig, TAction, TPlayerObservation, TOpponentObservation, TState> initialStateSupplier;
-    private EpisodeResultsFactory<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> episodeResultsFactory;
+    private final InitialStateSupplier<TAction, TObservation, TState> initialStateSupplier;
+    private final StateWrapperInitializer<TAction, TObservation, TState> stateStateWrapperInitializer;
+    private final EpisodeStatisticsCalculator<TAction, TObservation, TState, TStatistics> episodeStatisticsCalculator;
+    private final List<DataPointGeneratorGeneric<TStatistics>> additionalDataPointGeneratorList;
+    private final EpisodeResultsFactory<TAction, TObservation, TState> episodeResultsFactory;
 
-    private EpisodeStatisticsCalculator<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord, TStatistics> episodeStatisticsCalculator;
-    private List<DataPointGeneratorGeneric<TStatistics>> additionalDataPointGeneratorList;
+    private final List<PolicyDefinition<TAction, TObservation, TState>> policyDefinitionList;
 
-    private TrainablePredictor trainablePredictor;
-    private DataAggregator dataAggregator;
+    private final EpisodeWriter<TAction, TObservation, TState> episodeWriter;
 
-//    private SearchNodeMetadataFactory<TAction, TPlayerObservation, TOpponentObservation, TMetadata, TState> searchNodeMetadataFactory;
-//    private Supplier<RiskAverseNodeSelector<TAction, TPlayerObservation, TOpponentObservation, TMetadata, TState>> nodeSelectorSupplier;
-//    private NodeEvaluator<TAction, TPlayerObservation, TOpponentObservation, TMetadata, TState> evaluator;
-    private PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> opponentPolicySupplier;
+    private final EarlyStoppingStrategy<TAction, TObservation, TState, TStatistics> earlyStoppingStrategy;
 
-    private PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> policySupplier;
-    private EpisodeDataMaker<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> dataMaker;
-    private EpisodeWriter<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> episodeWriter;
-
-    public RunnerArguments(String policyId, TConfig problemConfig,
+    public RunnerArguments(String runName,
+                           TConfig problemConfig,
                            SystemConfig systemConfig,
-                           AlgorithmConfig algorithmConfig,
-                           InitialStateSupplier<TConfig, TAction, TPlayerObservation, TOpponentObservation, TState> initialStateSupplier,
-                           EpisodeResultsFactory<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> episodeResultsFactory,
-                           EpisodeStatisticsCalculator<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord, TStatistics> episodeStatisticsCalculator,
+                           CommonAlgorithmConfig algorithmConfig,
+                           SplittableRandom finalMasterRandom,
+                           InitialStateSupplier<TAction, TObservation, TState> initialStateSupplier,
+                           StateWrapperInitializer<TAction, TObservation, TState> stateStateWrapperInitializer,
+                           EpisodeResultsFactory<TAction, TObservation, TState> episodeResultsFactory,
+                           EpisodeStatisticsCalculator<TAction, TObservation, TState, TStatistics> episodeStatisticsCalculator,
                            List<DataPointGeneratorGeneric<TStatistics>> additionalDataPointGeneratorList,
-                           TrainablePredictor trainablePredictor,
-                           DataAggregator dataAgregator,
-                           PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> opponentPolicySupplier,
-                           PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> policySupplier,
-                           EpisodeDataMaker<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> dataMaker,
-                           EpisodeWriter<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> episodeWriter) {
-        this.policyId = policyId;
+                           EpisodeWriter<TAction, TObservation, TState> episodeWriter,
+                           List<PolicyDefinition<TAction, TObservation, TState>> policyDefinitionList,
+                           EarlyStoppingStrategy<TAction, TObservation, TState, TStatistics> earlyStoppingStrategy) {
+        this.runName = runName;
         this.problemConfig = problemConfig;
         this.systemConfig = systemConfig;
         this.algorithmConfig = algorithmConfig;
+        this.finalMasterRandom = finalMasterRandom;
         this.initialStateSupplier = initialStateSupplier;
+        this.stateStateWrapperInitializer = stateStateWrapperInitializer;
         this.episodeResultsFactory = episodeResultsFactory;
         this.episodeStatisticsCalculator = episodeStatisticsCalculator;
         this.additionalDataPointGeneratorList = additionalDataPointGeneratorList;
-        this.trainablePredictor = trainablePredictor;
-        this.dataAggregator = dataAgregator;
-        this.opponentPolicySupplier = opponentPolicySupplier;
-        this.policySupplier = policySupplier;
-        this.dataMaker = dataMaker;
         this.episodeWriter = episodeWriter;
+        this.policyDefinitionList = policyDefinitionList;
+        this.earlyStoppingStrategy = earlyStoppingStrategy;
+    }
+
+    public String getRunName() {
+        return runName;
     }
 
     public TConfig getProblemConfig() {
@@ -88,19 +82,23 @@ public class RunnerArguments<TConfig extends ProblemConfig,
         return systemConfig;
     }
 
-    public AlgorithmConfig getAlgorithmConfig() {
+    public CommonAlgorithmConfig getAlgorithmConfig() {
         return algorithmConfig;
     }
 
-    public InitialStateSupplier<TConfig, TAction, TPlayerObservation, TOpponentObservation, TState> getInitialStateSupplier() {
+    public InitialStateSupplier<TAction, TObservation, TState> getInitialStateSupplier() {
         return initialStateSupplier;
     }
 
-    public EpisodeResultsFactory<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getEpisodeResultsFactory() {
+    public StateWrapperInitializer<TAction, TObservation, TState> getStateStateWrapperInitializer() {
+        return stateStateWrapperInitializer;
+    }
+
+    public EpisodeResultsFactory<TAction, TObservation, TState> getEpisodeResultsFactory() {
         return episodeResultsFactory;
     }
 
-    public EpisodeStatisticsCalculator<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord, TStatistics> getEpisodeStatisticsCalculator() {
+    public EpisodeStatisticsCalculator<TAction, TObservation, TState, TStatistics> getEpisodeStatisticsCalculator() {
         return episodeStatisticsCalculator;
     }
 
@@ -108,31 +106,19 @@ public class RunnerArguments<TConfig extends ProblemConfig,
         return additionalDataPointGeneratorList;
     }
 
-    public TrainablePredictor getTrainablePredictor() {
-        return trainablePredictor;
-    }
-
-    public DataAggregator getDataAggregator() {
-        return dataAggregator;
-    }
-
-    public PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getOpponentPolicySupplier() {
-        return opponentPolicySupplier;
-    }
-
-    public PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getPolicySupplier() {
-        return policySupplier;
-    }
-
-    public EpisodeDataMaker<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getDataMaker() {
-        return dataMaker;
-    }
-
-    public EpisodeWriter<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getEpisodeWriter() {
+    public EpisodeWriter<TAction, TObservation, TState> getEpisodeWriter() {
         return episodeWriter;
     }
 
-    public String getPolicyId() {
-        return policyId;
+    public List<PolicyDefinition<TAction, TObservation, TState>> getPolicyDefinitionList() {
+        return policyDefinitionList;
+    }
+
+    public SplittableRandom getFinalMasterRandom() {
+        return finalMasterRandom;
+    }
+
+    public EarlyStoppingStrategy<TAction, TObservation, TState, TStatistics> getEarlyStoppingStrategy() {
+        return earlyStoppingStrategy;
     }
 }

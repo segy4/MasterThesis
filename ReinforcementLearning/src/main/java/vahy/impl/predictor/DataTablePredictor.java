@@ -4,7 +4,7 @@ import vahy.api.predictor.TrainablePredictor;
 import vahy.impl.model.observation.DoubleVector;
 import vahy.utils.ImmutableTuple;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,7 +56,16 @@ public class DataTablePredictor implements TrainablePredictor {
     }
 
     @Override
-    public void close() throws IOException {
+    public List<double[]> apply(List<DoubleVector> doubleVectors) {
+        var output = new ArrayList<double[]>(doubleVectors.size());
+        for (int i = 0; i < doubleVectors.size(); i++) {
+            output.add(predictionMap.getOrDefault(doubleVectors.get(i), defaultPrediction));
+        }
+        return output;
+    }
+
+    @Override
+    public void close() {
 
     }
 }

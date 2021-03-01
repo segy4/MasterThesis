@@ -16,24 +16,24 @@ public class SystemConfig implements Config {
 
     // Evaluation
     private final int evalEpisodeCount;
-
+    private final int evalEpisodeCountDuringTraining;
+    private final boolean evaluateDuringTraining;
 
     private final boolean dumpTrainingData;
     private final boolean dumpEvaluationData;
     private final Path dumpPath;
 
-    private final String pythonVirtualEnvPath;
-
-    public SystemConfig(long randomSeed, boolean singleThreadedEvaluation, int parallelThreadsCount, boolean drawWindow, int evalEpisodeCount, boolean dumpTrainingData, boolean dumpEvaluationData, Path dumpPath, String pythonVirtualEnvPath) {
+    public SystemConfig(long randomSeed, boolean singleThreadedEvaluation, int parallelThreadsCount, boolean drawWindow, int evalEpisodeCount, int evalEpisodeCountDuringTraining, boolean evaluateDuringTraining, boolean dumpTrainingData, boolean dumpEvaluationData, Path dumpPath) {
         this.randomSeed = randomSeed;
         this.singleThreadedEvaluation = singleThreadedEvaluation;
         this.parallelThreadsCount = parallelThreadsCount;
         this.drawWindow = drawWindow;
         this.evalEpisodeCount = evalEpisodeCount;
+        this.evalEpisodeCountDuringTraining = evalEpisodeCountDuringTraining;
+        this.evaluateDuringTraining = evaluateDuringTraining;
         this.dumpTrainingData = dumpTrainingData;
         this.dumpEvaluationData = dumpEvaluationData;
         this.dumpPath = dumpPath;
-        this.pythonVirtualEnvPath = pythonVirtualEnvPath;
     }
 
     public long getRandomSeed() {
@@ -56,6 +56,14 @@ public class SystemConfig implements Config {
         return evalEpisodeCount;
     }
 
+    public int getEvalEpisodeCountDuringTraining() {
+        return evalEpisodeCountDuringTraining;
+    }
+
+    public boolean isEvaluateDuringTraining() {
+        return evaluateDuringTraining;
+    }
+
     public boolean dumpTrainingData() {
         return dumpTrainingData;
     }
@@ -68,21 +76,18 @@ public class SystemConfig implements Config {
         return dumpPath;
     }
 
-    public String getPythonVirtualEnvPath() {
-        return pythonVirtualEnvPath;
-    }
-
-        @Override
+    @Override
     public String toString() {
         return "randomSeed," + randomSeed + System.lineSeparator() +
             "singleThreadedEvaluation," + singleThreadedEvaluation + System.lineSeparator() +
             "parallelThreadsCount," + parallelThreadsCount + System.lineSeparator() +
             "drawWindow," + drawWindow + System.lineSeparator() +
             "evalEpisodeCount," + evalEpisodeCount + System.lineSeparator() +
+            "evalDuringTraining," + evaluateDuringTraining + System.lineSeparator() +
+            "evalEpisodeCountDuringTraining," + evalEpisodeCountDuringTraining + System.lineSeparator() +
             "dumpTrainingData," + dumpTrainingData + System.lineSeparator() +
             "dumpEvaluationData," + dumpEvaluationData + System.lineSeparator() +
-            "dumpPath," + dumpPath + System.lineSeparator() +
-            "pythonVirtualEnvPath," + pythonVirtualEnvPath + System.lineSeparator();
+            "dumpPath," + dumpPath + System.lineSeparator();
     }
 
     @Override

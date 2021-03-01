@@ -5,8 +5,8 @@ import vahy.api.model.Action;
 import java.util.Queue;
 
 public abstract class AbstractObservationAggregator<
-    TAction extends Action,
-    TObservation extends Observation,
+    TAction extends Enum<TAction> & Action,
+    TObservation extends Observation<TObservation>,
     TObservationAggregation extends ObservationAggregation>
     implements ObservationAggregator<TAction, TObservation, TObservationAggregation> {
 

@@ -1,22 +1,21 @@
 package vahy.impl.episode;
 
-import vahy.utils.ImmutableTuple;
-import vahy.vizualiation.DataPointGenerator;
+import vahy.vizualization.DataPointGenerator;
+import vahy.vizualization.DataSample;
+import vahy.vizualization.LabelData;
 
+import java.util.List;
 import java.util.function.Function;
 
 public class DataPointGeneratorGeneric<TDataSource> implements DataPointGenerator {
 
     private final String dataTitle;
-    private final Function<TDataSource, Double> function;
+    private final Function<TDataSource, List<LabelData>> function;
 
     private int counter = 0;
-    private double value = Double.NaN;
+    private List<LabelData> valueList = null;
 
-    public DataPointGeneratorGeneric(
-        String dataTitle,
-        Function<TDataSource, Double> function)
-    {
+    public DataPointGeneratorGeneric(String dataTitle, Function<TDataSource, List<LabelData>> function) {
         this.dataTitle = dataTitle;
         this.function = function;
     }
@@ -27,12 +26,16 @@ public class DataPointGeneratorGeneric<TDataSource> implements DataPointGenerato
     }
 
     @Override
-    public ImmutableTuple<Double, Double> get() {
-        return new ImmutableTuple<>((double) counter, value);
+    public DataSample get() {
+        return new DataSample((double) counter, valueList);
     }
 
     public void addNewValue(TDataSource dataSource) {
         counter++;
-        value = function.apply(dataSource);
+        valueList = function.apply(dataSource);
+    }
+
+    public DataPointGeneratorGeneric<TDataSource> createCopy() {
+        return new DataPointGeneratorGeneric<>(dataTitle, function);
     }
 }

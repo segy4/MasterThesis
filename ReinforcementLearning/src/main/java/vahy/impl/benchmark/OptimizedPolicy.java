@@ -3,37 +3,45 @@ package vahy.impl.benchmark;
 import vahy.api.model.Action;
 import vahy.api.model.State;
 import vahy.api.model.observation.Observation;
-import vahy.api.policy.PolicyRecord;
-import vahy.api.policy.PolicySupplier;
-import vahy.api.predictor.TrainablePredictor;
+import vahy.api.policy.PolicySupplierFactory;
+import vahy.impl.learning.trainer.PredictorTrainingSetup;
+
+import java.util.List;
 
 public class OptimizedPolicy<
     TAction extends Enum<TAction> & Action,
-    TPlayerObservation extends Observation,
-    TOpponentObservation extends Observation,
-    TState extends State<TAction, TPlayerObservation, TOpponentObservation, TState>,
-    TPolicyRecord extends PolicyRecord> {
+    TObservation extends Observation<TObservation>,
+    TState extends State<TAction, TObservation, TState>> {
 
-    private final String policyId;
-    private final TrainablePredictor trainablePredictor;
-    private final PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> policySupplier;
+    private final int policyId;
+    private final int policyCategoryId;
+    private final List<PredictorTrainingSetup<TAction, TObservation, TState>> trainablePredictorSetupList;
+    private final PolicySupplierFactory<TAction, TObservation, TState> policySupplierFactory;
 
-    public OptimizedPolicy(String policyId, TrainablePredictor trainablePredictor, PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> policySupplier) {
+    public OptimizedPolicy(int policyId,
+                           int policyCategoryId,
+                           List<PredictorTrainingSetup<TAction, TObservation, TState>> trainablePredictorSetupList,
+                           PolicySupplierFactory<TAction, TObservation, TState> policySupplierFactory) {
         this.policyId = policyId;
-        this.trainablePredictor = trainablePredictor;
-        this.policySupplier = policySupplier;
+        this.policyCategoryId = policyCategoryId;
+        this.trainablePredictorSetupList = trainablePredictorSetupList;
+        this.policySupplierFactory = policySupplierFactory;
     }
 
-    public String getPolicyId() {
+    public int getPolicyId() {
         return policyId;
     }
 
-    public TrainablePredictor getTrainablePredictor() {
-        return trainablePredictor;
+    public int getPolicyCategoryId() {
+        return policyCategoryId;
     }
 
-    public PolicySupplier<TAction, TPlayerObservation, TOpponentObservation, TState, TPolicyRecord> getPolicySupplier() {
-        return policySupplier;
+    public List<PredictorTrainingSetup<TAction, TObservation, TState>> getTrainablePredictorSetupList() {
+        return trainablePredictorSetupList;
+    }
+
+    public PolicySupplierFactory<TAction, TObservation, TState> getPolicySupplierFactory() {
+        return policySupplierFactory;
     }
 
 }

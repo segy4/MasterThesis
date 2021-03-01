@@ -2,13 +2,11 @@ package vahy.api.model;
 
 import vahy.api.model.observation.Observation;
 
-public interface StateRewardReturn<
-    TAction extends Action,
-    TPlayerObservation extends Observation,
-    TOpponentObservation extends Observation,
-    TState extends State<TAction, TPlayerObservation, TOpponentObservation, TState>> {
+public interface StateRewardReturn<TAction extends Enum<TAction> & Action, TObservation extends Observation<TObservation>, TState extends State<TAction, TObservation, TState>> {
 
-    double getReward();
+    double[] getReward();
+
+    TAction[] getAction();
 
     TState getState();
 

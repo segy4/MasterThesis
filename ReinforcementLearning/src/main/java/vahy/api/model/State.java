@@ -1,28 +1,23 @@
 package vahy.api.model;
 
 import vahy.api.model.observation.Observation;
+import vahy.api.predictor.PerfectStatePredictor;
 
 import java.util.List;
 
-public interface State<
-    TAction extends Action,
-    TPlayerObservation extends Observation,
-    TOpponentObservation extends Observation,
-    TState extends State<TAction, TPlayerObservation, TOpponentObservation, TState>> {
+public interface State<TAction extends Enum<TAction> & Action, TObservation extends Observation<TObservation>, TState extends State<TAction, TObservation, TState>> {
 
-    TAction[] getAllPossibleActions();
+    TAction[] getAllPossibleActions(int inGameEntityId);
 
-    TAction[] getPossiblePlayerActions();
+    int getTotalEntityCount();
 
-    TAction[] getPossibleOpponentActions();
+    StateRewardReturn<TAction, TObservation, TState> applyAction(TAction actionType);
 
-    StateRewardReturn<TAction, TPlayerObservation, TOpponentObservation, TState> applyAction(TAction actionType);
+    TObservation getInGameEntityObservation(int inGameEntityId);
 
-    TState deepCopy();
+    TObservation getCommonObservation(int inGameEntityId);
 
-    TPlayerObservation getPlayerObservation();
-
-    TOpponentObservation getOpponentObservation();
+    PerfectStatePredictor<TAction, TObservation, TState> getKnownModelWithPerfectObservationPredictor();
 
     String readableStringRepresentation();
 
@@ -30,11 +25,11 @@ public interface State<
 
     List<String> getCsvRecord();
 
-    boolean isOpponentTurn();
+    int getInGameEntityIdOnTurn();
 
-    default boolean isPlayerTurn() {
-        return !isOpponentTurn();
-    }
+    boolean isEnvironmentEntityOnTurn();
+
+    boolean isInGame(int inGameEntityId);
 
     boolean isFinalState();
 
